@@ -29,6 +29,8 @@ model Client {
   mealPlans    MealPlan[]
   reviews      Review[]
   createdAt    DateTime      @default(now())
+  weight       Float?   // <--- Make sure this exists and has the '?' for optional
+  targetWeight Float?   // <--- Make sure this exists and has the '?' for optional
 }
 
 model Appointment {
