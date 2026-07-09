@@ -1,0 +1,61 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Dietitian {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String
+  name         String
+  createdAt    DateTime      @default(now())
+  clients      Client[]
+  appointments Appointment[]
+  reviews      Review[]
+}
+
+model Client {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String
+  name         String
+  dietitianId  String
+  dietitian    Dietitian     @relation(fields: [dietitianId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  mealPlans    MealPlan[]
+  reviews      Review[]
+  createdAt    DateTime      @default(now())
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  dateTime    DateTime
+  status      String   @default("PENDING")
+  dietitianId String
+  dietitian   Dietitian @relation(fields: [dietitianId], references: [id], onDelete: Cascade)
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model MealPlan {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id          String    @id @default(cuid())
+  rating      Int
+  comment     String?
+  dietitianId String
+  dietitian   Dietitian @relation(fields: [dietitianId], references: [id], onDelete: Cascade)
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
