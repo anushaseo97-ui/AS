@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { ArrowRight, Play, Sparkles, Shield, Clock } from "lucide-react";
-import FallingVitamins from "./FallingVitamins";
+import NutritionWheel from "./NutritionWheel";
 import SketchyBackground from "./SketchyBackground";
+import ConnectorRope from "./ConnectorRope";
 
 export default function Hero() {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-chocolate-50/50 pt-20">
   <SketchyBackground />
+  <ConnectorRope />
 
      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 w-full">
     {/* ... baaki same rahega ... */}
@@ -71,8 +73,8 @@ export default function Hero() {
           </div>
 
           {/* Right Content - Animation confined here only */}
-          <div className="relative hidden lg:block h-[500px]">
-            <FallingVitamins count={14} />
+          <div className="relative hidden lg:block h-[500px] flex items-center justify-center">
+          <NutritionWheel />
           </div>
         </div>
       </div>

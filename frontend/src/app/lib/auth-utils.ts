@@ -1,21 +1,30 @@
 import { cookies } from 'next/headers';
 
+export interface Session {
+  id: string;
+  role: "DIETITIAN" | "CLIENT";
+}
+
 /**
- * Authentically extracts the active Dietitian's ID from the secure session cookie.
- * Returns the string ID if logged in, or null if unauthenticated.
+ * Reads the session cookie set during login ('nutrilife_session')
+ * and returns the logged-in user's id + role, or null if not logged in.
  */
-export function getDietitianSession(): string | null {
+export function getSession(): Session | null {
   try {
     const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('dietitian_session');
+    const sessionCookie = cookieStore.get('nutrilife_session');
 
-    // If the cookie doesn't exist or is completely blank, they aren't logged in
     if (!sessionCookie || !sessionCookie.value) {
       return null;
     }
 
-    // Return the secure dietitian ID string saved inside the cookie
-    return sessionCookie.value;
+    const parsed = JSON.parse(sessionCookie.value);
+
+    if (!parsed?.id || !parsed?.role) {
+      return null;
+    }
+
+    return parsed as Session;
   } catch (error) {
     console.error("Error reading authentication session cookie:", error);
     return null;

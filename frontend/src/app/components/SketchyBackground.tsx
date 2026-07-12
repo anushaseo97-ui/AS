@@ -1,6 +1,6 @@
 // src/app/components/SketchyBackground.tsx
 "use client";
-
+import { motion } from "framer-motion";
 const icons = [
   {
     // Apple (simplified: circle + stem)
@@ -105,12 +105,11 @@ const icons = [
     rotate: 10,
   },
 ];
-
 export default function SketchyBackground() {
   return (
-   <div className="absolute top-20 left-0 right-0 bottom-0 overflow-hidden pointer-events-none z-0">
+    <div className="absolute top-20 left-0 right-0 bottom-0 overflow-hidden pointer-events-none z-0">
       {icons.map((icon, i) => (
-        <svg
+        <motion.svg
           key={i}
           viewBox="0 0 24 24"
           fill="none"
@@ -119,16 +118,20 @@ export default function SketchyBackground() {
           strokeLinecap="round"
           strokeLinejoin="round"
           className="absolute text-chocolate-400/40"
-          style={{
-            top: icon.top,
-            left: icon.left,
-            width: icon.size,
-            height: icon.size,
-            transform: `rotate(${icon.rotate}deg)`,
+          style={{ top: icon.top, left: icon.left, width: icon.size, height: icon.size }}
+          animate={{
+            y: [0, -10, 0],
+            rotate: [icon.rotate, icon.rotate + 6, icon.rotate],
+          }}
+          transition={{
+            duration: 4 + i * 0.4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 0.3,
           }}
         >
           {icon.path}
-        </svg>
+        </motion.svg>
       ))}
     </div>
   );

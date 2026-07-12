@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/app/lib/db';
-import { getDietitianSession } from '@/app/lib/auth-utils';
+import { getSession } from '@/app/lib/auth-utils';
 
 export async function POST(request: Request) {
   try {
     // 1. Enforce Dietitian Authentication
-    const dietitianId = getDietitianSession();
-    if (!dietitianId) {
-      return NextResponse.json({ error: "Unauthorized. Professional access required." }, { status: 401 });
-    }
+    const session = getSession();
+if (!session || session.role !== "DIETITIAN") {
+  return NextResponse.json({ error: "Unauthorized. Professional access required." }, { status: 401 });
+}
+const dietitianId = session.id;
 
     // 2. Parse Incoming Request Payload
     const body = await request.json();
@@ -44,16 +45,18 @@ export async function POST(request: Request) {
       2. Clear breakdown for Breakfast, Lunch, Dinner, and Snacking across 3 structured days.
     `;
 
-    // 5. Connect Directly to the Fireworks AI API (AMD Architecture Endpoint)
-    const apiKey = process.env.FIREWORKS_API_KEY;
-    const response = await fetch("https://api.fireworks.ai/inference/v1/chat/completions", {
+    console.log("🚀 SENDING MODEL TO PRIVATE AMD GPU SERVER:", "unsloth/gemma-2-9b-it");
+
+    // 5. Connect Directly to your Private AMD Server
+    const amdServerUrl = "http://36.150.116.194:8000/v1/chat/completions"; 
+    
+    const response = await fetch(amdServerUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "accounts/fireworks/models/llama-v3p1-8b-instruct", // High-efficiency model
+        model: "unsloth/gemma-2-9b-it",
         messages: [
           { role: "system", content: "You are a professional medical nutrition software agent." },
           { role: "user", content: aiPrompt }
@@ -65,18 +68,32 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Fireworks API Error Return:", errorText);
+      console.error("AMD vLLM Server Error Return:", errorText);
       return NextResponse.json({ error: "Upstream intelligence processing failed." }, { status: 502 });
     }
 
     const aiData = await response.json();
     const generatedPlanText = aiData.choices[0].message.content;
 
+    // =========================================================
+    // 💾 STEP 2 INTEGRATION: Save directly to your PostgreSQL DB
+    // =========================================================
+    const savedPlan = await db.mealPlan.create({
+      data: {
+        title: `AI Strategy Plan - ${client.name}`, // Fulfills required title parameter
+        content: generatedPlanText,               // Maps to long Text column
+        clientId: client.id,                       // Links relational foreign key
+      },
+    });
+
+    console.log(`💾 Meal Plan saved to DB with unique ID: ${savedPlan.id}`);
+
     // 6. Return the Generated Strategy Document Cleanly to Frontend
     return NextResponse.json({
       success: true,
-      provider: "Fireworks AI via AMD Compute Infrastructure",
-      mealPlan: generatedPlanText
+      provider: "Self-Hosted vLLM via Private AMD Compute Infrastructure",
+      mealPlan: generatedPlanText,
+      planId: savedPlan.id
     }, { status: 200 });
 
   } catch (error) {

@@ -1,61 +1,87 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/app/lib/db';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs'; // Password secure rakhne ke liye
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, name } = body;
+    const { email, password, name, role, secretCode, dietitianId } = body;
 
-    // 1. Validation
-    if (!email || !password || !name) {
-      return NextResponse.json(
-        { error: "Name, email, and password are required fields." },
-        { status: 400 }
-      );
+    if (!email || !password || !name || !role) {
+      return NextResponse.json({ error: "All fields are required." }, { status: 400 });
     }
 
-    // 2. Check if the Dietitian already exists
-    const existingDietitian = await db.dietitian.findUnique({
-      where: { email },
-    });
+    // Password ko hash (secure) karein
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    if (existingDietitian) {
-      return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 }
-      );
+    // ==========================================
+    // CASE 1: DIETITIAN REGISTRATION
+    // ==========================================
+    if (role === "DIETITIAN") {
+      // 🤫 DEMO HACKATHON SECRET CODE CHECK
+      // Agar unhone secret code sahi likha, toh isVerified true hoga, warna false!
+      const isVerified = secretCode === "NUTRILIFE-DEMO-2026";
+
+      const newDietitian = await db.dietitian.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name,
+          isVerified: isVerified, // Toggled dynamically
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: isVerified 
+          ? "Dietitian registered and verified successfully!" 
+          : "Registered. Awaiting admin portfolio review.",
+        user: { name: newDietitian.name, role: "DIETITIAN", isVerified }
+      });
     }
 
-    // 3. Authentically hash the password (12 salt rounds is industry standard)
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // ==========================================
+    // CASE 2: CLIENT REGISTRATION (Via Invite Link)
+    // ==========================================
+    if (role === "CLIENT") {
+      if (!dietitianId) {
+        return NextResponse.json({ error: "Clients must register via a Dietitian's invite link." }, { status: 400 });
+      }
 
-    // 4. Save the new Dietitian to your live Neon Database
-    const newDietitian = await db.dietitian.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-      },
-      // Do not return the hashed password string back to the client side
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        createdAt: true,
-      },
-    });
+      // Check karein ke jis dietitian ka link hai, kya woh khud verified hai?
+      const targetDietitian = await db.dietitian.findUnique({
+        where: { id: dietitianId }
+      });
 
-    return NextResponse.json(
-      { message: "Dietitian account created successfully!", user: newDietitian },
-      { status: 201 }
-    );
+      if (!targetDietitian || !targetDietitian.isVerified) {
+        return NextResponse.json({ error: "Invalid or unverified Dietitian reference link." }, { status: 400 });
+      }
 
-  } catch (error) {
-    console.error("Registration Server Error:", error);
-    return NextResponse.json(
-      { error: "Internal server error during registration." },
-      { status: 500 }
-    );
+      // Client create karein aur automatically isVerified: true kardein
+      const newClient = await db.client.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name,
+          dietitianId: dietitianId,
+          isVerified: true, // Auto-verified because they used a verified link!
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Client registered and linked successfully!",
+        user: { name: newClient.name, role: "CLIENT", isVerified: true }
+      });
+    }
+
+    return NextResponse.json({ error: "Invalid account type role." }, { status: 400 });
+
+  } catch (error: any) {
+    console.error("Registration Error:", error);
+    if (error.code === 'P2002') {
+      return NextResponse.json({ error: "An account with this email already exists." }, { status: 400 });
+    }
+    return NextResponse.json({ error: "Registration processing failed." }, { status: 500 });
   }
 }
