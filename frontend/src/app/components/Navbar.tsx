@@ -80,10 +80,10 @@ export default function Navbar() {
           {/* Extra placeholder links for logged-out users to maintain layout beauty */}
           {!session && (
             <>
-              <Link href="#features" className="px-3 py-1.5 text-chocolate-600 hover:text-chocolate-950 font-medium transition-colors">
+              <Link href="/features" className="px-3 py-1.5 text-chocolate-600 hover:text-chocolate-950 font-medium transition-colors">
                 Features
               </Link>
-              <Link href="#pricing" className="px-3 py-1.5 text-chocolate-600 hover:text-chocolate-950 font-medium transition-colors">
+              <Link href="/pricing" className="px-3 py-1.5 text-chocolate-600 hover:text-chocolate-950 font-medium transition-colors">
                 Pricing
               </Link>
             </>

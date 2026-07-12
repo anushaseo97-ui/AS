@@ -52,13 +52,14 @@ export async function POST(request: Request) {
     // 5. Connect Directly to your Private AMD Server
     const amdServerUrl = "http://36.150.116.194:8000/v1/chat/completions"; 
     
-    const response = await fetch(amdServerUrl, {
+    const response = await fetch("https://api.fireworks.ai/inference/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.FIREWORKS_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "unsloth/gemma-2-9b-it",
+        model: "accounts/fireworks/models/llama-v3-8b-instruct",
         messages: [
           { role: "system", content: "You are a professional medical nutrition software agent." },
           { role: "user", content: aiPrompt }

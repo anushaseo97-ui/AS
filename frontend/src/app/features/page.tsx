@@ -2,40 +2,35 @@
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { Check } from "lucide-react";
-import Link from "next/link";
+import { Utensils, Activity, Users, Shield, Zap } from "lucide-react";
 
-const tiers = [
-  { name: "Starter", price: "$29", features: ["Basic Meal Plans", "Weekly Tracking", "Email Support"] },
-  { name: "Pro", price: "$59", features: ["Customized Plans", "Daily Tracking", "Priority Support", "App Access"] },
-  { name: "Enterprise", price: "$99", features: ["1-on-1 Coaching", "Advanced Analytics", "Personalized Consultation", "24/7 Access"] },
+const featureList = [
+  { icon: Utensils, title: "AI Meal Planning", desc: "Get smart, nutrition-focused meal plans generated instantly for your goals." },
+  { icon: Activity, title: "Progress Tracking", desc: "Visualize your weight, hydration, and calorie intake with interactive dashboards." },
+  { icon: Zap, title: "Customized Macros", desc: "Adjust your protein, fat, and carb targets based on expert recommendations." },
+  { icon: Users, title: "Dietitian Connection", desc: "Direct messaging and appointment booking with verified nutrition professionals." },
+  { icon: Shield, title: "Secure Privacy", desc: "Your health data is encrypted and kept completely private, always." },
+  { icon: Shield, title: "Expert Vetting", desc: "Every dietitian on our platform is verified for your safety and success." },
 ];
 
-export default function PricingPage() {
+export default function FeaturesPage() {
   return (
-    <div className="min-h-screen bg-chocolate-50/30">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto text-center mb-16">
-          <h1 className="text-4xl font-bold font-serif text-chocolate-900">Simple, Transparent Pricing</h1>
-          <p className="text-chocolate-500 mt-4 text-lg">Choose the plan that fits your wellness journey.</p>
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-bold font-serif text-chocolate-900">Everything you need to thrive</h1>
+          <p className="text-chocolate-500 mt-4 text-lg">Powerful tools built to help you reach your health goals faster.</p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {tiers.map((tier) => (
-            <div key={tier.name} className="bg-white p-8 rounded-3xl border border-chocolate-100 flex flex-col">
-              <h3 className="text-xl font-bold text-chocolate-900">{tier.name}</h3>
-              <p className="text-4xl font-bold text-chocolate-900 my-6">{tier.price}<span className="text-base font-normal text-chocolate-400">/mo</span></p>
-              <ul className="space-y-4 mb-8 flex-1">
-                {tier.features.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-chocolate-600 text-sm">
-                    <Check className="w-5 h-5 text-sage-600" /> {f}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/signup" className="w-full py-3 bg-chocolate-700 text-white font-semibold rounded-xl hover:bg-chocolate-900 transition-colors text-center">
-                Get Started
-              </Link>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {featureList.map((feat) => (
+            <div key={feat.title} className="p-8 rounded-3xl border border-chocolate-100 hover:border-sage-300 transition-colors">
+              <div className="w-12 h-12 rounded-2xl bg-sage-50 flex items-center justify-center mb-6">
+                <feat.icon className="w-6 h-6 text-chocolate-500" />
+              </div>
+              <h3 className="text-lg font-bold text-chocolate-900">{feat.title}</h3>
+              <p className="text-chocolate-500 mt-2 text-sm leading-relaxed">{feat.desc}</p>
             </div>
           ))}
         </div>
