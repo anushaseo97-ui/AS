@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/app/lib/db';
 import { getSession } from '@/app/lib/auth-utils';
-
+export const dynamic = 'force-dynamic';
 interface RouteParams {
   params: {
     id: string;

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/app/lib/db';
 import bcrypt from 'bcryptjs'; // Password secure rakhne ke liye
-
+export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
