@@ -2,14 +2,16 @@ import { NextResponse } from 'next/server';
 import { db } from '@/app/lib/db';
 import { getSession } from '@/app/lib/auth-utils';
 
+export const dynamic = 'force-dynamic'; 
+
 export async function POST(request: Request) {
   try {
     // 1. Enforce Dietitian Authentication
     const session = getSession();
-if (!session || session.role !== "DIETITIAN") {
-  return NextResponse.json({ error: "Unauthorized. Professional access required." }, { status: 401 });
-}
-const dietitianId = session.id;
+    if (!session || session.role !== "DIETITIAN") {
+     return NextResponse.json({ error: "Unauthorized. Professional access required." }, { status: 401 });
+    }
+      const dietitianId = session.id;
 
     // 2. Parse Incoming Request Payload
     const body = await request.json();
