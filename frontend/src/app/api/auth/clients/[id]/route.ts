@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/app/lib/db';
-import { getDietitianSession } from '@/app/lib/auth-utils';
+import { getSession } from '@/app/lib/auth-utils';
 
 interface RouteParams {
   params: {
@@ -13,10 +13,11 @@ interface RouteParams {
  */
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const dietitianId = getDietitianSession();
-    if (!dietitianId) {
+        const session = getSession();
+    if (!session || session.role !== "DIETITIAN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const dietitianId = session.id;
 
     const client = await db.client.findUnique({
       where: { id: params.id },
