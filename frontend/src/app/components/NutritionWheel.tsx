@@ -1,4 +1,3 @@
-// src/app/components/NutritionWheel.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -17,8 +16,8 @@ const segments = [
 const CENTER = 190;
 const RADIUS = 160;
 const ANGLE_PER = 360 / segments.length;
-const FEED_DURATION = 1400; // ms segment stays fed/lifted at top
-const ROTATE_DURATION = 1000; // ms rotation transition
+const FEED_DURATION = 3000; // ms — rest time on each slice (increased so it's readable)
+const ROTATE_DURATION = 1100; // ms — smooth turn to next slice
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const angleRad = ((angleDeg - 90) * Math.PI) / 180;
@@ -26,41 +25,46 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
 }
 
 function segmentPath(index: number, total: number) {
-  const start = polarToCartesian(CENTER, CENTER, RADIUS, (index + 1) * ANGLE_PER);
-  const end = polarToCartesian(CENTER, CENTER, RADIUS, index * ANGLE_PER);
+  const start = polarToCartesian(CENTER, CENTER, RADIUS, (index + 1) * ANGLE_PER - ANGLE_PER / 2);
+  const end = polarToCartesian(CENTER, CENTER, RADIUS, index * ANGLE_PER - ANGLE_PER / 2);
   return `M ${CENTER} ${CENTER} L ${start.x} ${start.y} A ${RADIUS} ${RADIUS} 0 0 0 ${end.x} ${end.y} Z`;
 }
 
 function segmentMidAngle(index: number) {
-  return index * ANGLE_PER + ANGLE_PER / 2;
+  return index * ANGLE_PER ;
 }
 
-// The point just above the wheel, where the rope "feeds" nutrients in
-const FEED_POINT = { x: CENTER, y: CENTER - RADIUS - 12 };
+// Feed point sits right where the rope meets the wheel's rim
+const FEED_POINT = { x: CENTER, y: CENTER - RADIUS - 6 };
 
 export default function NutritionWheel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [phase, setPhase] = useState<"feeding" | "rotating">("feeding");
   const [feedTick, setFeedTick] = useState(0);
+  const stepCount = useRef(0); // never resets — keeps growing so rotation never snaps back
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // rotation value so that segments[activeIndex]'s midpoint sits exactly at the top (angle 0)
-  const rotation = -(segmentMidAngle(activeIndex));
+  // Rotation always increases (clockwise, moving right) — never wraps back to a smaller value
+  const rotation = stepCount.current * ANGLE_PER ;
 
   useEffect(() => {
-    if (phase === "feeding") {
-      setFeedTick((t) => t + 1);
-      timeoutRef.current = setTimeout(() => setPhase("rotating"), FEED_DURATION);
-    } else {
-      timeoutRef.current = setTimeout(() => {
-        setActiveIndex((prev) => (prev + 1) % segments.length);
-        setPhase("feeding");
-      }, ROTATE_DURATION);
-    }
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [phase]);
+  if (phase === "feeding") {
+    setFeedTick((t) => t + 1);
+    timeoutRef.current = setTimeout(() => {
+      // Start the rotation NOW — move to the next slice and switch phase,
+      // so the wheel begins animating toward it immediately.
+      stepCount.current += 1;
+      setActiveIndex((segments.length - (stepCount.current % segments.length)) % segments.length);
+      setPhase("rotating");
+    }, FEED_DURATION);
+  } else {
+    // Wait for the rotation animation to fully finish before feeding starts again
+    timeoutRef.current = setTimeout(() => setPhase("feeding"), ROTATE_DURATION);
+  }
+  return () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  };
+}, [phase]);
 
   const isLifted = phase === "feeding";
 
@@ -73,7 +77,7 @@ export default function NutritionWheel() {
           </filter>
         </defs>
 
-        {/* Rotating wheel group */}
+        {/* Rotating wheel group — always spins the same direction (clockwise) */}
         <motion.g
           style={{ transformOrigin: `${CENTER}px ${CENTER}px` }}
           animate={{ rotate: rotation }}
@@ -83,7 +87,6 @@ export default function NutritionWheel() {
             const isActive = i === activeIndex;
             const midAngle = segmentMidAngle(i);
             const midRad = ((midAngle - 90) * Math.PI) / 180;
-            // Lift only the active segment, and only while it's settled at the top
             const liftOffset = isActive && isLifted ? 26 : 0;
             const dx = Math.cos(midRad) * liftOffset;
             const dy = Math.sin(midRad) * liftOffset;
@@ -103,7 +106,6 @@ export default function NutritionWheel() {
                     transition: "opacity 0.4s, stroke 0.4s",
                   }}
                 />
-                {/* Icon counter-rotates in sync so it always stays upright */}
                 <motion.g
                   style={{ transformOrigin: `${iconPos.x}px ${iconPos.y}px` }}
                   animate={{ rotate: -rotation }}
@@ -120,7 +122,7 @@ export default function NutritionWheel() {
           })}
         </motion.g>
 
-        {/* Feeding dots — only during "feeding" phase, travel from the rope's feed point into the top slice */}
+        {/* Feeding dots — now travel further INTO the slice, past the rim, so it visibly "fills" it */}
         {phase === "feeding" &&
           [0, 0.15, 0.3].map((delay, idx) => (
             <motion.circle
@@ -128,8 +130,8 @@ export default function NutritionWheel() {
               r={5 - idx * 0.5}
               fill={segments[activeIndex].color}
               initial={{ cx: FEED_POINT.x, cy: FEED_POINT.y, opacity: 0.9 }}
-              animate={{ cx: CENTER, cy: CENTER - RADIUS * 0.55, opacity: 0 }}
-              transition={{ duration: 0.7, delay, ease: "easeIn" }}
+              animate={{ cx: CENTER, cy: CENTER - RADIUS * 0.35, opacity: 0 }}
+              transition={{ duration: 0.8, delay, ease: "easeIn" }}
             />
           ))}
 
@@ -162,7 +164,6 @@ export default function NutritionWheel() {
         </text>
       </svg>
 
-      {/* Tooltip syncs with the active (top) segment */}
       <AnimatePresence mode="wait">
         {isLifted && (
           <motion.div

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/app/lib/auth-utils';
 import { db } from '@/app/lib/db';
+
 export const dynamic = 'force-dynamic';
+
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
@@ -16,14 +18,18 @@ export async function PATCH(
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  const { answer } = await request.json();
+  const { answer, isPublic } = await request.json();
   if (!answer || !answer.trim()) {
     return NextResponse.json({ error: "Answer text is required." }, { status: 400 });
   }
 
   const updated = await db.question.update({
     where: { id: params.id },
-    data: { answer, answeredAt: new Date() },
+    data: {
+      answer,
+      answeredAt: new Date(),
+      ...(typeof isPublic === "boolean" ? { isPublic } : {}),
+    },
   });
 
   return NextResponse.json({ success: true, question: updated });

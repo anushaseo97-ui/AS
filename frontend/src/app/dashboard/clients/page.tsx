@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, User } from "lucide-react";
+import { Search, Plus, User, MessageCircle, Send, Globe, Lock } from "lucide-react";
 import AiMealPlanGenerator from "@/app/components/AiMealPlanGenerator";
 
 interface Client {
@@ -13,12 +13,25 @@ interface Client {
   lastVisit: string;
 }
 
+interface PrivateQuestion {
+  id: string;
+  question: string;
+  answer: string | null;
+  clientId: string;
+  createdAt: string;
+}
+
 export default function ClientsPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  const [questions, setQuestions] = useState<PrivateQuestion[]>([]);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyIsPublic, setReplyIsPublic] = useState<Record<string, boolean>>({});
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadClients() {
@@ -52,6 +65,50 @@ export default function ClientsPage() {
     const debounce = setTimeout(loadClients, 300);
     return () => clearTimeout(debounce);
   }, [search, router]);
+
+  useEffect(() => {
+    async function loadQuestions() {
+      if (!selectedClient) return;
+      try {
+        const res = await fetch(
+          `/api/dashboard/questions?clientId=${selectedClient.id}`,
+          { cache: "no-store" }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setQuestions(data.questions);
+        }
+      } catch (error) {
+        console.error("Failed to load questions:", error);
+      }
+    }
+    loadQuestions();
+  }, [selectedClient]);
+
+  const handleReply = async (id: string) => {
+    const answer = replyDrafts[id];
+    if (!answer || !answer.trim()) return;
+
+    setSubmittingId(id);
+    try {
+      const isPublic = replyIsPublic[id] || false;
+      const res = await fetch(`/api/dashboard/questions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer, isPublic }),
+      });
+      if (res.ok) {
+        setReplyDrafts((prev) => ({ ...prev, [id]: "" }));
+        setQuestions((prev) =>
+          prev.map((q) => (q.id === id ? { ...q, answer } : q))
+        );
+      }
+    } catch (error) {
+      console.error("Failed to submit reply:", error);
+    } finally {
+      setSubmittingId(null);
+    }
+  };
 
   if (loading && clients.length === 0) {
     return (
@@ -150,6 +207,72 @@ export default function ClientsPage() {
                 clientId={selectedClient.id}
                 clientName={selectedClient.name}
               />
+
+              {/* Private questions from this client */}
+              <div className="bg-white rounded-2xl border border-chocolate-100 p-5 space-y-4">
+                <h3 className="text-sm font-bold text-chocolate-900 flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-sage-600" />
+                  Questions from {selectedClient.name}
+                </h3>
+
+                {questions.length === 0 ? (
+                  <p className="text-xs text-chocolate-400">No questions yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {questions.map((q) => (
+                      <div key={q.id} className="p-3 rounded-xl border border-chocolate-100 space-y-2">
+                        <p className="text-sm text-chocolate-900">{q.question}</p>
+
+                        {q.answer ? (
+                          <p className="text-xs text-sage-700 bg-sage-50 rounded-lg p-2">
+                            {q.answer}
+                          </p>
+                        ) : (
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              placeholder="Write a reply..."
+                              value={replyDrafts[q.id] || ""}
+                              onChange={(e) =>
+                                setReplyDrafts((prev) => ({ ...prev, [q.id]: e.target.value }))
+                              }
+                              className="w-full bg-chocolate-50 rounded-lg px-3 py-2 text-xs text-chocolate-900 placeholder:text-chocolate-400 focus:outline-none"
+                            />
+                            <div className="flex items-center justify-between">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setReplyIsPublic((prev) => ({ ...prev, [q.id]: !prev[q.id] }))
+                                }
+                                className={`flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full transition-colors ${
+                                  replyIsPublic[q.id]
+                                    ? "bg-sage-100 text-sage-700"
+                                    : "bg-chocolate-100 text-chocolate-600"
+                                }`}
+                              >
+                                {replyIsPublic[q.id] ? (
+                                  <Globe className="w-3 h-3" />
+                                ) : (
+                                  <Lock className="w-3 h-3" />
+                                )}
+                                {replyIsPublic[q.id] ? "Will post publicly" : "Stays private"}
+                              </button>
+                              <button
+                                onClick={() => handleReply(q.id)}
+                                disabled={submittingId === q.id}
+                                className="flex items-center gap-1 px-2.5 py-1 bg-chocolate-700 text-white text-[11px] font-semibold rounded-lg hover:bg-chocolate-900 transition-colors disabled:opacity-50"
+                              >
+                                <Send className="w-3 h-3" />
+                                {submittingId === q.id ? "..." : "Reply"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

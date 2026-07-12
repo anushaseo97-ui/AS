@@ -1,40 +1,80 @@
 "use client";
 
-import { useState } from "react";
-import { MessageCircle, ThumbsUp, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { MessageCircle, Send } from "lucide-react";
 
-const questions = [
-  {
-    id: 1,
-    author: "Priya M.",
-    question: "Is intermittent fasting safe for someone with a history of low blood sugar?",
-    replies: 2,
-    likes: 14,
-    hasExpertReply: true,
-  },
-  {
-    id: 2,
-    author: "Daniel R.",
-    question: "What's a realistic protein target for a beginner strength training routine?",
-    replies: 0,
-    likes: 3,
-    hasExpertReply: false,
-  },
-  {
-    id: 3,
-    author: "Aisha K.",
-    question: "Can meal timing actually affect metabolism, or is that a myth?",
-    replies: 1,
-    likes: 8,
-    hasExpertReply: true,
-  },
-];
+interface Question {
+  id: string;
+  question: string;
+  answer: string | null;
+  author: string;
+  createdAt: string;
+  hasExpertReply: boolean;
+}
 
 export default function CommunityPage() {
+  const router = useRouter();
   const [filter, setFilter] = useState<"all" | "unanswered">("all");
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
+
+  async function loadQuestions() {
+    try {
+      const res = await fetch("/api/community", { cache: "no-store" });
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json();
+        setQuestions(data.questions);
+      }
+    } catch (error) {
+      console.error("Failed to load community questions:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadQuestions();
+  }, []);
 
   const filtered =
     filter === "unanswered" ? questions.filter((q) => !q.hasExpertReply) : questions;
+
+  const handleReply = async (id: string) => {
+    const answer = replyDrafts[id];
+    if (!answer || !answer.trim()) return;
+
+    setSubmittingId(id);
+    try {
+      const res = await fetch(`/api/community/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer }),
+      });
+      if (res.ok) {
+        setReplyDrafts((prev) => ({ ...prev, [id]: "" }));
+        loadQuestions();
+      }
+    } catch (error) {
+      console.error("Failed to submit reply:", error);
+    } finally {
+      setSubmittingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-sage-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-10">
@@ -48,7 +88,6 @@ export default function CommunityPage() {
           </p>
         </div>
 
-        {/* Filter tabs */}
         <div className="flex gap-2">
           {(["all", "unanswered"] as const).map((f) => (
             <button
@@ -65,52 +104,58 @@ export default function CommunityPage() {
           ))}
         </div>
 
-        {/* Questions list */}
         <div className="space-y-4">
-          {filtered.map((q) => (
-            <div
-              key={q.id}
-              className="bg-white rounded-2xl border border-chocolate-100 p-5"
-            >
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <div>
-                  <p className="text-sm font-medium text-chocolate-900">{q.author}</p>
-                  <p className="text-sm text-chocolate-600 mt-1">{q.question}</p>
+          {filtered.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-chocolate-100 p-8 text-center">
+              <p className="text-sm text-chocolate-400">No public questions yet.</p>
+            </div>
+          ) : (
+            filtered.map((q) => (
+              <div key={q.id} className="bg-white rounded-2xl border border-chocolate-100 p-5">
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div>
+                    <p className="text-sm font-medium text-chocolate-900">{q.author}</p>
+                    <p className="text-sm text-chocolate-600 mt-1">{q.question}</p>
+                  </div>
+                  {!q.hasExpertReply && (
+                    <span className="text-xs font-medium text-chocolate-600 bg-chocolate-100 px-2.5 py-1 rounded-full flex-shrink-0">
+                      Needs Reply
+                    </span>
+                  )}
                 </div>
-                {!q.hasExpertReply && (
-                  <span className="text-xs font-medium text-chocolate-600 bg-chocolate-100 px-2.5 py-1 rounded-full flex-shrink-0">
-                    Needs Reply
-                  </span>
+
+                {q.answer ? (
+                  <div className="flex items-start gap-2 bg-sage-50 border border-sage-200 rounded-xl p-3 mt-3">
+                    <MessageCircle className="w-4 h-4 text-sage-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-chocolate-800">{q.answer}</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 bg-chocolate-50 rounded-xl p-2 mt-3">
+                    <input
+                      type="text"
+                      placeholder="Write a reply..."
+                      value={replyDrafts[q.id] || ""}
+                      onChange={(e) =>
+                        setReplyDrafts((prev) => ({ ...prev, [q.id]: e.target.value }))
+                      }
+                      className="flex-1 bg-transparent px-3 py-2 text-sm text-chocolate-900 placeholder:text-chocolate-400 focus:outline-none"
+                    />
+                    <button
+                      onClick={() => handleReply(q.id)}
+                      disabled={submittingId === q.id}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-chocolate-700 text-white text-xs font-semibold rounded-lg hover:bg-chocolate-900 transition-colors flex-shrink-0 disabled:opacity-50"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      {submittingId === q.id ? "Sending..." : "Reply"}
+                    </button>
+                  </div>
                 )}
               </div>
-
-              <div className="flex items-center gap-4 text-xs text-chocolate-400 mb-4">
-                <span className="flex items-center gap-1.5">
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  {q.replies} replies
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <ThumbsUp className="w-3.5 h-3.5" />
-                  {q.likes}
-                </span>
-              </div>
-
-              {/* Forum Copilot draft reply box */}
-              <div className="flex items-center gap-2 bg-chocolate-50 rounded-xl p-2">
-                <input
-                  type="text"
-                  placeholder="Write or generate a reply..."
-                  className="flex-1 bg-transparent px-3 py-2 text-sm text-chocolate-900 placeholder:text-chocolate-400 focus:outline-none"
-                />
-                <button className="flex items-center gap-1.5 px-3 py-2 bg-chocolate-700 text-white text-xs font-semibold rounded-lg hover:bg-chocolate-900 transition-colors flex-shrink-0">
-                  <Send className="w-3.5 h-3.5" />
-                  Reply
-                </button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
   );
 }
+
