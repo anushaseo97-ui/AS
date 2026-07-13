@@ -10,7 +10,7 @@ const featureList = [
   { icon: Zap, title: "Customized Macros", desc: "Adjust your protein, fat, and carb targets based on expert recommendations." },
   { icon: Users, title: "Dietitian Connection", desc: "Direct messaging and appointment booking with verified nutrition professionals." },
   { icon: Shield, title: "Secure Privacy", desc: "Your health data is encrypted and kept completely private, always." },
-  { icon: Shield, title: "Expert Vetting", desc: "Every dietitian on our platform is verified for your safety and success." },
+  { icon: Shield, title: "Verified Practitioners", desc: "Dietitians confirm their professional status during onboarding, with a verification badge visible on their profile." },
 ];
 
 export default function FeaturesPage() {

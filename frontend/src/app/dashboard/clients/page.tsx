@@ -121,15 +121,9 @@ export default function ClientsPage() {
   return (
     <div className="p-6 lg:p-10">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold font-serif text-chocolate-900">Clients</h1>
-            <p className="text-chocolate-400 mt-1">Manage your client roster.</p>
-          </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-chocolate-700 text-white text-sm font-semibold rounded-xl hover:bg-chocolate-900 transition-colors">
-            <Plus className="w-4 h-4" />
-            Add Client
-          </button>
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold font-serif text-chocolate-900">Clients</h1>
+          <p className="text-chocolate-400 mt-1">Manage your client roster.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NutriLife
 
-## Getting Started
+A full-stack nutrition practice management platform connecting dietitians with clients — built for the Unicorn Track hackathon.
 
-First, run the development server:
+**Live demo:** [https://as-kappa-five.vercel.app/]
+
+## What it does
+
+NutriLife is a two-sided platform for dietitians and their clients:
+
+- **Dietitians** manage their client roster, schedule and confirm appointments, generate AI-powered meal plans, and answer client questions — publicly or privately.
+- **Clients** get a personal workspace showing their meal plans, can request appointments, and ask nutrition questions to their dietitian or the wider community.
+- **Anyone**, even without an account, can browse public nutrition Q&A and ask a question — any dietitian on the platform can choose to answer.
+
+## Key features
+
+- **Role-based auth** — separate secure flows for dietitians and clients, with invite-link-based client onboarding
+- **AI-generated meal plans** — dietitians generate personalized 3-day meal plans using a self-hosted Gemma 2 model running on AMD GPU infrastructure (see below), with manual plan creation also supported
+- **Booking → Approval flow** — public visitors submit a consultation request; a dietitian reviews and approves it, generating an invite link; the client signs up and a real appointment is scheduled
+- **Public/private Q&A** — clients can ask questions privately to their own dietitian, or post publicly for any dietitian to answer. Dietitians can also choose to make a private answer public. Anonymous visitors can ask public questions too, with no account required
+- **Real-time dashboard** — live stats on clients, appointments, and meal plans, all backed by a real Postgres database (no mock data)
+
+## Tech stack
+
+- **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS
+- **Backend:** Next.js API routes
+- **Database:** PostgreSQL (hosted on Neon), Prisma ORM
+- **Auth:** HTTP-only session cookies, bcrypt password hashing
+- **AI Inference:** Self-hosted vLLM serving `unsloth/gemma-2-9b-it` on **AMD MI300X GPU infrastructure** (AMD Developer Cloud, ROCm 7.2), exposed via a secure tunnel
+- **Deployment:** Vercel
+
+## Use of AMD Platforms
+
+Meal plan generation runs on a real, self-hosted inference server on AMD GPU hardware (ROCm 7.2 + vLLM), not a third-party managed API. The dietitian-facing meal plan generator sends live requests to this AMD-hosted model, and generated plans are persisted to the database and shown to both the dietitian and the client in real time.
+
+## Getting started locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd frontend
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Create a `.env` file with:
+```
+DATABASE_URL="your-postgres-connection-string"
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Then:
+```bash
+npx prisma db push
+npx prisma generate
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Visit `http://localhost:3000`.
 
-## Learn More
+## Project structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/app/
+  api/              → Backend API routes (auth, dashboard, community, booking, ai)
+  dashboard/        → Dietitian-facing pages (clients, appointments, meal plans, settings)
+  workspace/        → Client-facing personal dashboard
+  community/         → Public Q&A page
+  booking/          → Public consultation request form
+  signup/, login/   → Auth pages
+  components/       → Shared UI components
+prisma/
+  schema.prisma     → Database schema
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Known limitations
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Billing/payments are not integrated — pricing discussion currently happens manually between dietitian and client after booking approval
+- Notification preferences and password-change are UI placeholders, not yet connected to a backend
+- AI generation requires the AMD GPU instance to be actively running
 
-## Deploy on Vercel
+## Team
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+[Advance]
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+[Add your license, or note if unlicensed for hackathon purposes]

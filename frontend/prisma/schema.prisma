@@ -8,18 +8,19 @@ generator client {
 }
 
 model Dietitian {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  password     String
-  name         String
-  questions Question[]
-  createdAt    DateTime      @default(now())
-  // 🌟 ADD THIS LINE: Track if the professional is verified
-  isVerified   Boolean       @default(false)
-  clients      Client[]
-  appointments Appointment[]
-  reviews      Review[]
-  bookingRequests BookingRequest[]
+  id                String        @id @default(cuid())
+  email             String        @unique
+  password          String
+  name              String
+  questions         Question[]
+  answeredQuestions Question[]    @relation("AnsweredQuestions")
+  createdAt         DateTime      @default(now())
+  isVerified        Boolean       @default(false)
+  price             Float?
+  clients           Client[]
+  appointments      Appointment[]
+  reviews           Review[]
+  bookingRequests   BookingRequest[]
 }
 
 model Client {
@@ -28,16 +29,15 @@ model Client {
   password     String
   name         String
   dietitianId  String
-  questions Question[]
+  questions    Question[]
   dietitian    Dietitian     @relation(fields: [dietitianId], references: [id], onDelete: Cascade)
-  // 🌟 ADD THIS LINE: Track if the client is verified/activated
   isVerified   Boolean       @default(false)
   appointments Appointment[]
   mealPlans    MealPlan[]
   reviews      Review[]
   createdAt    DateTime      @default(now())
-  weight       Float?   // <--- Make sure this exists and has the '?' for optional
-  targetWeight Float?   // <--- Make sure this exists and has the '?' for optional
+  weight       Float?
+  targetWeight Float?
 }
 
 model Appointment {
@@ -58,16 +58,20 @@ model MealPlan {
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
+
 model Question {
-  id           String    @id @default(cuid())
-  question     String    @db.Text
-  answer       String?   @db.Text
-  isPublic     Boolean   @default(false)
-  clientId     String
-  client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  dietitianId  String
-  dietitian    Dietitian @relation(fields: [dietitianId], references: [id], onDelete: Cascade)
-  createdAt    DateTime  @default(now())
+  id           String     @id @default(cuid())
+  question     String     @db.Text
+  answer       String?    @db.Text
+  isPublic     Boolean    @default(false)
+  authorName   String?
+  clientId     String?
+  client       Client?    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  dietitianId  String?
+  dietitian    Dietitian? @relation(fields: [dietitianId], references: [id], onDelete: Cascade)
+  answeredById String?
+  answeredBy   Dietitian? @relation("AnsweredQuestions", fields: [answeredById], references: [id])
+  createdAt    DateTime   @default(now())
   answeredAt   DateTime?
 }
 

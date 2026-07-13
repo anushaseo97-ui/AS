@@ -4,10 +4,10 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 
 const benefits = [
-  "14-day free trial, no credit card",
-  "Unlimited clients & meal plans",
-  "Priority 24/7 support",
-  "Cancel anytime",
+  "AI-generated meal plans",
+  "Client & appointment management",
+  "Community Q&A support",
+  "No credit card required",
 ];
 
 export default function CTA() {
@@ -36,15 +36,16 @@ export default function CTA() {
         </div>
 
         <Link
-          href="/register"
+          href="/signup"
           className="group inline-flex items-center justify-center gap-2 px-10 py-5 bg-sage-600 text-white font-semibold text-lg rounded-2xl shadow-2xl shadow-sage-600/25 hover:bg-sage-500 hover:shadow-sage-600/40 transition-all duration-300"
         >
           Start Your Free Trial
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </Link>
 
-        <p className="mt-6 text-sm text-chocolate-400">No credit card required. Full access for 14 days.</p>
+        <p className="mt-6 text-sm text-chocolate-400">No credit card required.</p>
       </div>
     </section>
   );
 }
+

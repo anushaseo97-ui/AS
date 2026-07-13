@@ -93,7 +93,7 @@ function SignupFormContent() {
                 To sign up as a client, you need an active booking. Please book an initial consultation first.
               </p>
               <button 
-                onClick={() => router.push('/appointments')} 
+                onClick={() => router.push('/booking')} 
                 className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg text-xs font-semibold transition-colors"
               >
                 <Calendar className="w-3.5 h-3.5" />

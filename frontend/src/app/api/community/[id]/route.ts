@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/app/lib/auth-utils';
 import { db } from '@/app/lib/db';
-export const dynamic = 'force-dynamic';
+
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
@@ -23,7 +23,7 @@ export async function PATCH(
 
   const updated = await db.question.update({
     where: { id: params.id },
-    data: { answer, answeredAt: new Date() },
+    data: { answer, answeredAt: new Date(), answeredById: session.id },
   });
 
   return NextResponse.json({ success: true, question: updated });

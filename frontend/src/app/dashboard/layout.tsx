@@ -20,17 +20,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-chocolate-100 flex flex-col">
         <Link
-          href="/"
-          className="px-6 py-5 border-b border-chocolate-100 flex items-center gap-2 hover:bg-chocolate-50 transition-colors"
-        >
-          <div className="w-8 h-8 rounded-lg bg-sage-100 flex items-center justify-center">
+  href="/"
+  className="group px-6 py-5 border-b border-chocolate-100 flex flex-col hover:bg-chocolate-50 transition-colors"
+>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-sage-100 flex items-center justify-center transition-transform group-hover:scale-105">
             <Leaf className="w-4.5 h-4.5 text-sage-600" />
           </div>
           <span className="text-xl font-bold font-serif">
             <span className="text-chocolate-900">Nutri</span>
             <span className="text-sage-600">Life</span>
           </span>
-        </Link>
+        </div>
+        <span className="text-[10px] text-sage-600/80 font-medium tracking-wide opacity-70 group-hover:opacity-100 transition-opacity ml-10 mt-0.5">
+          Click leaf to return Home
+        </span>
+      </Link>
 
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map((item) => {
