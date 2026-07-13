@@ -13,7 +13,7 @@ const tiers = [
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen sage-600">
+    <div className="min-h-screen bg-chocolate-50">
       <Navbar />
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center mb-16">

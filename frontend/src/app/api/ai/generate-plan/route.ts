@@ -50,19 +50,20 @@ export async function POST(request: Request) {
     console.log("🚀 SENDING MODEL TO PRIVATE AMD GPU SERVER:", "unsloth/gemma-2-9b-it");
 
     // 5. Connect Directly to your Private AMD Server
-    const amdServerUrl = "http://36.150.116.194:8000/v1/chat/completions"; 
+   
     
-    const response = await fetch("https://api.fireworks.ai/inference/v1/chat/completions", {
+   const amdServerUrl = "https://ruby-blank-helpline.ngrok-free.dev/v1/chat/completions";
+
+    const response = await fetch(amdServerUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.FIREWORKS_API_KEY}`,
+        "ngrok-skip-browser-warning": "true",
       },
       body: JSON.stringify({
-        model: "accounts/fireworks/models/llama-v3-8b-instruct",
-        messages: [
-          { role: "system", content: "You are a professional medical nutrition software agent." },
-          { role: "user", content: aiPrompt }
+        model: "unsloth/gemma-2-9b-it",
+         messages: [
+          { role: "user", content: `You are a professional medical nutrition software agent.\n\n${aiPrompt}` }
         ],
         temperature: 0.7,
         max_tokens: 1200,
