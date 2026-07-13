@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     id: q.id,
     question: q.question,
     answer: q.answer,
-    clientName: q.client.name,
+    clientName: q.client?.name || q.authorName || "Anonymous",
     clientId: q.clientId,
     createdAt: q.createdAt,
   }));
